@@ -1,0 +1,33 @@
+*|* { margin:0pt; padding:0pt; }
+ body { background: transparent url(theme/background.jpg?374476) repeat-x center top; background-color:#fff; font-family:"lucida grande", arial, sans-serif; font-size:12px; color:#464e54; margin:0; padding:0; }
+ div.paragraph { line-height:1.5; }
+ p { line-height:1.5; }
+ h1, h2, h3{ line-height:1.5; }
+ #wrapper { width:799px; padding-top:46px; margin:0pt auto; }
+ #header { background: transparent url(theme/content_top.jpg?374476) repeat-x center top; width:799px; height:26px; }
+ #sitename { width:759px; color:#555656; font-size:1.75em; margin-left:40px; margin-bottom:15px; text-transform:uppercase; }
+ #navigation { width:759px; position:relative; margin-left:40px; }
+ #navigation ul { float:left; padding:6px 10px 0 0; margin-left:0; }
+ #navigation li { float:left; display:inline; font-size:1em; margin-right:15px; padding-top:6px; }
+ *html #navigation li { margin-right:4px; }
+ #active { background: transparent url(theme/tab_left.gif?374476) no-repeat left top; padding:6px 3px 12px 3px; color:#fff; font-family:"lucida grande", arial, sans-serif; font-weight:bold; text-align:center; }
+ *html #active { padding:6px 5px 12px 3px; }
+ .inactive { padding:6px 15px 8px 14px; font-family:"lucida grande", arial, sans-serif; text-align:center; }
+ *html .inactive { padding-left:20px; padding-right:15px; padding-bottom:9px; }
+ #navigation a:link { color:#555656; text-decoration:none; font-weight:bold; }
+ #navigation a:hover { color:#555656; text-decoration:none; font-weight:bold; }
+ #navigation a:visited { color:#555656; text-decoration:none; font-weight:bold; }
+ #active a { background: transparent url(theme/tab_right.gif?374476) no-repeat right top; padding:6px 13px 9px 9px; }
+ #active a:link { color:#fff; text-decoration:none; }
+ #active a:hover { color:#fff; text-decoration:none; }
+ #active a:visited { color:#fff; text-decoration:none; }
+ a:link,a:hover,a:visited { color:#007dda; font-weight:normal; }
+ .weebly_header { background: transparent url(../files/theme/6442743.jpg?374476) no-repeat center top; width:716px; height:214px; clear:both; margin-bottom:30px; }
+ #content-wrapper { background: transparent url(theme/content_background.jpg?374476) no-repeat center top; width:799px; }
+ #content { clear:both; padding:30px 40px 0px 40px; min-height:450px; }
+ img.image-left { margin-right:15px; float:left; }
+ img.image-right { margin-left:15px; float:right; }
+ #footer { margin-left:40px; padding-bottom:20px; }
+ .blog-sidebar h2 { padding-top:20px; padding-bottom:5px; }
+
+div.paragraph ul, div.paragraph ol, div.paragraph li { list-style-position: inside; }
