@@ -1,0 +1,15 @@
+-register
+-conectare
+-conversatii
+-mesaj catre
+lista conversatii cu mesaje necitite nume
+-istoric conversatie de la (buffer)
+-reply
+-deconecatre
+-quit 
+
+idei aditionale:
+request
+friend/unfriend
+lista prieteni
+
