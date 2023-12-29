@@ -6,7 +6,7 @@
    
    Autor: Lenuta Alboaie  <adria@info.uaic.ro> (c)
 */
-
+#include "mydb.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -40,8 +40,10 @@ int main ()
     int sd;		//descriptorul de socket 
     int pid;
     pthread_t th[100];    //Identificatorii thread-urilor care se vor crea
-	int i=0;
+	  int i=0;
   
+    sqlite3* db = open_database("my_database.db"); //deschide database ul aplicatiei
+    create_tables(db); //creeaza tabele
 
   /* crearea unui socket */
     if ((sd = socket (AF_INET, SOCK_STREAM, 0)) == -1)
@@ -105,9 +107,12 @@ int main ()
 	    td->idThread=i++;
 	    td->cl=client;
 
-	    pthread_create(&th[i], NULL, &treat, td);	      
-				
-	}//while    
+	    pthread_create(&th[i], NULL, &treat, td);
+
+		close_database(db); 	
+	}//while  
+
+  //close_database(db);  
 };
 				
 static void *treat(void * arg)
