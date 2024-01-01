@@ -109,10 +109,10 @@ int main ()
 
 	    pthread_create(&th[i], NULL, &treat, td);
 
-		close_database(db); 	
+			
 	}//while  
 
-  //close_database(db);  
+  close_database(db);  
 };
 				
 static void *treat(void * arg)
@@ -170,7 +170,17 @@ void raspunde(void *arg)
                       
               }
               
-              printf ("[Thread %d]Mesajul a fost receptionat...%s\n",tdL.idThread, msg1);	
+              printf ("[Thread %d]Mesajul a fost receptionat...%s\n",tdL.idThread, msg1);
+
+              sqlite3* db = open_database("my_database.db");
+              int exists;
+              exists= check_username(db, msg1);
+
+              if(exists!=0)
+              {
+                  char warning[]="username-ul este deja existent";
+                  warning[30]='\0'; 
+              }
 
               char response1[]="trebuie password";
               response1[16]='\0';

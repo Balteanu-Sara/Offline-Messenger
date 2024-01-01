@@ -43,7 +43,7 @@ void  create_tables(sqlite3* db)
     const char* data = "Callback function called";
 
     sql = "CREATE TABLE IF NOT EXISTS USERS("  \
-        "user_id INT PRIMARY KEY NOT NULL,"  \
+        "user_id INT PRIMARY KEY AUTOINCREMENT,"  \
         "username CHAR(30) NOT NULL,"  \
         "password CHAR(15) NOT NULL);";  
 
@@ -58,7 +58,7 @@ void  create_tables(sqlite3* db)
     }
 
     sql = "CREATE TABLE IF NOT EXISTS MESSAGES("  \
-        "message_id INT PRIMARY KEY NOT NULL,"  \
+        "message_id INT PRIMARY KEY AUTOINCREMENT,"  \
         "sender_id INT,"  \
         "receiver_id INT,"  \
         "message_text TEXT NOT NULL,"  \
@@ -79,7 +79,7 @@ void  create_tables(sqlite3* db)
     }
 
     sql = "CREATE TABLE IF NOT EXISTS CONVERSATIONS("  \
-        "convo_id INT PRIMARY KEY NOT NULL,"  \
+        "convo_id INT PRIMARY KEY AUTOINCREMENT,"  \
         "user1_id INT,"  \
         "user2_id INT,"  \
         "last_message_id INT,"  \
@@ -97,6 +97,46 @@ void  create_tables(sqlite3* db)
     } else {
           fprintf(stdout, "Table CONVERSATIONS has been created.\n");
     }
+}
+
+int check_username(sqlite3* db, char username[])
+{
+    sqlite3_stmt *stmt;
+    int rc;
+    char *sql;
+    char *zErrMsg = 0;
+    const char* data = "Callback function called";
+
+    sql = "SELECT COUNT(*) from USERS WHERE username = ?;";  
+
+    rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot prepare statement: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return -1;
+    }
+
+    sqlite3_bind_text(stmt, 1, username, -1, SQLITE_STATIC);
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_ROW) {
+        fprintf(stderr, "Error executing query: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+        return -1;
+    }
+
+    int result= sqlite3_column_int(stmt, 0);
+
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+
+    return result;
+}
+
+void insert_into_users(sqlite3* db)
+{
+
 }
 
 void close_database(sqlite3* db) {
