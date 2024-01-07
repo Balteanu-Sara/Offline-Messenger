@@ -101,6 +101,31 @@ int main (int argc, char *argv[])
 
           printf ("[client]Mesajul primit este: %s\n", buf);
 
+          char warning[]="username-ul este deja existent";
+          warning[30]='\0'; 
+
+          while(strcmp(buf, warning)==0)
+          {
+              printf ("[client]Seteaza alt username: ");
+              fflush (stdout);
+              bzero(buf, sizeof(buf));
+              scanf("%s", buf);
+
+              if(write (sd, buf, sizeof(buf)) <= 0)
+              { 
+                perror ("[client]Eroare la write() spre server.\n");
+                return errno;           
+              }
+
+              if (read (sd, buf, sizeof(buf)) < 0)
+              {
+                  perror ("[client]Eroare la read() de la server.\n");
+                  return errno;
+              }
+
+              printf ("[client]Mesajul primit este: %s\n", buf);
+          }
+
           printf ("[client]Password: ");
           fflush (stdout);
           //read (0, buf, sizeof(buf));

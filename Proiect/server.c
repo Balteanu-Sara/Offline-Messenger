@@ -130,6 +130,7 @@ static void *treat(void * arg)
 void raspunde(void *arg)
 {
     int continua=1, in=0, in_convo=0;
+    char current_user[35]="";
     while(continua)
     {
         int nr;
@@ -178,8 +179,31 @@ void raspunde(void *arg)
 
               if(exists!=0)
               {
-                  char warning[]="username-ul este deja existent";
-                  warning[30]='\0'; 
+                  while(exists)
+                  {
+                      char warning[]="username-ul este deja existent";
+                      warning[30]='\0'; 
+
+                      printf("[Thread %d]Trimitem mesajul inapoi...%s\n",tdL.idThread, warning);
+
+                      if (write (tdL.cl, warning, sizeof(warning)) <= 0)
+                      {
+                          printf("[Thread %d] ",tdL.idThread);
+                          perror ("[Thread]Eroare la write() catre client.\n");
+                      }
+
+                      if (read (tdL.cl, msg1, sizeof(msg1)) <= 0)
+                      {
+                          printf("[Thread %d]\n",tdL.idThread);
+                          perror ("Eroare la read() de la client.\n");
+                              
+                      }
+                      
+                      printf ("[Thread %d]Mesajul a fost receptionat...%s\n",tdL.idThread, msg1);
+
+                      sqlite3* db = open_database("my_database.db");
+                      exists = check_username(db, msg1);
+                  }
               }
 
               char response1[]="trebuie password";
@@ -202,6 +226,10 @@ void raspunde(void *arg)
               }
               
               printf ("[Thread %d]Mesajul a fost receptionat...%s\n",tdL.idThread, msg2);	
+
+              open_database("my_database.db");
+              //printf("%s, %s\n", msg1, msg2);
+              insert_into_users(db, msg1, msg2);
 
               char response2[]="Inregistrat!";
               response2[12]='\0';
@@ -237,6 +265,8 @@ void raspunde(void *arg)
                   perror ("Eroare la read() de la client.\n");
                       
               }
+
+              strcpy(current_user, msg1);
               
               printf ("[Thread %d]Mesajul a fost receptionat...%s\n",tdL.idThread, msg1);	
 
@@ -250,7 +280,7 @@ void raspunde(void *arg)
                   printf("[Thread %d] ",tdL.idThread);
                   perror ("[Thread]Eroare la write() catre client.\n");
               }
-
+              
               char msg2[101];
               if (read (tdL.cl, msg2, sizeof(msg2)) <= 0)
               {
@@ -261,15 +291,35 @@ void raspunde(void *arg)
               
               printf ("[Thread %d]Mesajul a fost receptionat...%s\n",tdL.idThread, msg2);	
 
-              char response2[]="client logged in!";
-              response2[17]='\0';
+              sqlite3* db = open_database("my_database.db");
+              int exists = check_account(db, msg1, msg2);
 
-              printf("[Thread %d]Trimitem mesajul inapoi...%s\n",tdL.idThread, response2);
-
-              if (write (tdL.cl, response2, sizeof(response2)) <= 0)
+              if(exists == 1)
               {
-                  printf("[Thread %d] ",tdL.idThread);
-                  perror ("[Thread]Eroare la write() catre client.\n");
+                  char response2[]="client logged in!";
+                  response2[17]='\0';
+
+                  printf("[Thread %d]Trimitem mesajul inapoi...%s\n",tdL.idThread, response2);
+
+                  if (write (tdL.cl, response2, sizeof(response2)) <= 0)
+                  {
+                      printf("[Thread %d] ",tdL.idThread);
+                      perror ("[Thread]Eroare la write() catre client.\n");
+                  }
+              }
+              else
+              if(exists == 0)
+              {
+                  char response2[]="username sau parola incorecta!";
+                  response2[30]='\0';
+
+                  printf("[Thread %d]Trimitem mesajul inapoi...%s\n",tdL.idThread, response2);
+
+                  if (write (tdL.cl, response2, sizeof(response2)) <= 0)
+                  {
+                      printf("[Thread %d] ",tdL.idThread);
+                      perror ("[Thread]Eroare la write() catre client.\n");
+                  }
               }
 
             }
@@ -366,6 +416,9 @@ void raspunde(void *arg)
                 }
                 
                 printf ("[Thread %d]Mesajul a fost receptionat...%s\n",tdL.idThread, msg2);	
+
+                sqlite3* db = open_database("my_database.db");
+                insert_into_messages(db, current_user, msg1, msg2);
 
                 char response2[]="mesaj trimis!";
                 response2[13]='\0';
