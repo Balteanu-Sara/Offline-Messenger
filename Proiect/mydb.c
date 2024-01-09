@@ -459,7 +459,7 @@ void insert_into_messages(sqlite3* db, char sender[], char receiver[], char txt[
             sqlite3_close(db);
         }
 
-        sql="UPDATE CONVERSATIONS SET activity_time = (SELECT sent_time FROM MESSAGES WHERE message_id = ?);" ;
+        sql="UPDATE CONVERSATIONS SET activity_time = (SELECT sent_time FROM MESSAGES WHERE message_id = ?) WHERE user1_id= ? AND user2_id= ?;" ;
 
         rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
         if (rc != SQLITE_OK) {
@@ -468,6 +468,17 @@ void insert_into_messages(sqlite3* db, char sender[], char receiver[], char txt[
         }
 
         rc = sqlite3_bind_int(stmt, 1, messageid);
+        if (rc != SQLITE_OK) {
+            fprintf(stderr, "Cannot bind parameter 3: %s\n", sqlite3_errmsg(db));
+            sqlite3_finalize(stmt);   
+        }
+
+        rc = sqlite3_bind_int(stmt, 2, user1id);
+        if (rc != SQLITE_OK) {
+            fprintf(stderr, "Cannot bind parameter 2: %s\n", sqlite3_errmsg(db));
+            sqlite3_finalize(stmt);   
+        }
+        rc = sqlite3_bind_int(stmt, 3, user2id);
         if (rc != SQLITE_OK) {
             fprintf(stderr, "Cannot bind parameter 3: %s\n", sqlite3_errmsg(db));
             sqlite3_finalize(stmt);   
@@ -534,7 +545,7 @@ void insert_into_messages(sqlite3* db, char sender[], char receiver[], char txt[
 
         //sql="UPDATE CONVERSATIONS SET activity_time= ? WHERE user1_id= ? AND user2_id= ?;";
 
-        sql="UPDATE CONVERSATIONS SET activity_time = (SELECT sent_time FROM MESSAGES WHERE message_id = ?)";
+        sql="UPDATE CONVERSATIONS SET activity_time = (SELECT sent_time FROM MESSAGES WHERE message_id = ?) WHERE user1_id= ? AND user2_id= ?;";
 
         rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
         if (rc != SQLITE_OK) {
@@ -557,6 +568,16 @@ void insert_into_messages(sqlite3* db, char sender[], char receiver[], char txt[
             fprintf(stderr, "Cannot bind parameter 3: %s\n", sqlite3_errmsg(db));
             sqlite3_finalize(stmt);   
         }
+        rc = sqlite3_bind_int(stmt, 2, user1id);
+        if (rc != SQLITE_OK) {
+            fprintf(stderr, "Cannot bind parameter 2: %s\n", sqlite3_errmsg(db));
+            sqlite3_finalize(stmt);   
+        }
+        rc = sqlite3_bind_int(stmt, 3, user2id);
+        if (rc != SQLITE_OK) {
+            fprintf(stderr, "Cannot bind parameter 2: %s\n", sqlite3_errmsg(db));
+            sqlite3_finalize(stmt);   
+        }  
 
         rc = sqlite3_step(stmt);
         if (rc != SQLITE_DONE) {
