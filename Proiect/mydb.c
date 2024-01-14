@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sqlite3.h> 
+#include <sqlite3.h>
+#include <string.h> 
 #include "mydb.h"
 
 
@@ -591,6 +592,143 @@ void insert_into_messages(sqlite3* db, char sender[], char receiver[], char txt[
 
     sqlite3_finalize(stmt);
 
+}
+
+//void show_conversations(sqlite3* db, char username[], char *conversations[], int& count1)
+void show_conversations(sqlite3* db, char username[], char conversations[256][256], int *count1)
+{
+    sqlite3_stmt* stmt;
+    int rc;
+    char *sql;
+
+    sql = "SELECT user_id FROM USERS WHERE username = ?;";
+    
+    //luam id-ul clientului curent
+    rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot prepare statement: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+    } 
+
+    rc = sqlite3_bind_text(stmt, 1, username, -1, SQLITE_STATIC);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot bind parameter: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+    }
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_ROW) {
+        fprintf(stderr, "Error executing query: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+    }
+    else fprintf(stdout, "Got current user's id.\n");
+
+    int userid = sqlite3_column_int(stmt, 0);
+    fprintf(stderr, "Current user's id: %d\n", userid);
+
+    rc = sqlite3_reset(stmt);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Error resetting statement: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+    }
+
+    sql="SELECT user1_id, user2_id FROM CONVERSATIONS WHERE user1_id= ? OR user2_id= ? ORDER BY activity_time DESC;";
+
+    rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot prepare statement: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+    }
+
+    rc = sqlite3_bind_int(stmt, 1, userid);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot bind parameter 1: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+    }
+    rc = sqlite3_bind_int(stmt, 2, userid);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot bind parameter 2: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);   
+    }
+
+    int index=0;
+
+    sqlite3_stmt* stmt1;
+    int rc1, again=0;
+    char *sql1;
+
+    while((rc = sqlite3_step(stmt)) == SQLITE_ROW)
+    {
+        int user1_id = sqlite3_column_int(stmt, 0);
+        int user2_id = sqlite3_column_int(stmt, 1);
+
+        fprintf(stderr, "From the array, user1's id: %d\n", user1_id);
+        fprintf(stderr, "From the array, user2's id: %d\n", user2_id);
+
+        int other_userid;
+
+        if(user1_id==userid)
+            other_userid=user2_id;
+        else if(user2_id==userid)
+                other_userid=user1_id;
+
+        fprintf(stderr, "From the array, the other user's id: %d\n", other_userid);
+
+        if(again==1)
+        {
+            rc1 = sqlite3_reset(stmt1);
+            if(rc1 != SQLITE_OK) {
+                fprintf(stderr, "Error resetting statement: %s\n", sqlite3_errmsg(db));
+                sqlite3_finalize(stmt1);
+                sqlite3_close(db);
+            }
+        }
+
+        //obtinem usernameul la other_userid
+        sql1= "SELECT username FROM USERS WHERE user_id = ?;";
+
+        rc1 = sqlite3_prepare_v2(db, sql1, -1, &stmt1, NULL);
+        if (rc1 != SQLITE_OK) {
+            fprintf(stderr, "Cannot prepare statement: %s\n", sqlite3_errmsg(db));
+            sqlite3_close(db);
+        }
+
+        rc1 = sqlite3_bind_int(stmt1, 1, other_userid);
+        if (rc1 != SQLITE_OK) {
+            fprintf(stderr, "Cannot bind parameter 1: %s\n", sqlite3_errmsg(db));
+            sqlite3_finalize(stmt1);
+        }
+
+        rc1 = sqlite3_step(stmt1);
+        if (rc1 != SQLITE_ROW) {
+            fprintf(stderr, "Error executing query: %s\n", sqlite3_errmsg(db));
+            sqlite3_finalize(stmt1);
+            sqlite3_close(db);
+        }
+        else fprintf(stdout, "We have other_userid's username .\n");
+
+        const char* other_username=sqlite3_column_text(stmt1,0);
+        fprintf(stderr, "Other_userid's username: %s\n", other_username);
+
+        strcpy(conversations[index], other_username);
+        index++;
+
+        again=1;
+    }
+    sqlite3_finalize(stmt1);
+
+    *count1=index;
+
+    if (rc != SQLITE_DONE) {
+        fprintf(stderr, "Error executing query: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+        exit(1);
+    }
+
+    sqlite3_finalize(stmt);
 }
 
 void close_database(sqlite3* db) {

@@ -17,7 +17,6 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <pthread.h>
-
 /* portul folosit */
 #define PORT 2908
 
@@ -342,13 +341,32 @@ void raspunde(void *arg)
 
               if(in==1)
               {
+                char conversations[256][256];
+                int count;
+                sqlite3* db = open_database("my_database.db");
+                show_conversations(db, current_user,conversations, &count);
+
+                int i;
+                for(i=0; i<count ; i++)
+                {
+                  printf("%s\n", conversations[i]);
+                }
+
                 in_convo=0;
-                char response[]="*afiseaza lista conversatii*";
-                response[28]='\0';
+                //char response[]="*afiseaza lista conversatii*";
+                //response[28]='\0';
 
-                printf("[Thread %d]Trimitem mesajul inapoi...%s\n",tdL.idThread, response);
+                printf("[Thread %d]Trimitem mesajul inapoi...%d\n",tdL.idThread, count);
 
-                if (write (tdL.cl, response, sizeof(response)) <= 0)
+                if (write (tdL.cl, &count, sizeof(int)) <= 0)
+                {
+                    printf("[Thread %d] ",tdL.idThread);
+                    perror ("[Thread]Eroare la write() catre client.\n");
+                }
+
+                //printf("[Thread %d]Trimitem mesajul inapoi...%s\n",tdL.idThread, conversations);
+
+                if (write (tdL.cl, conversations, sizeof(conversations)) <= 0)
                 {
                     printf("[Thread %d] ",tdL.idThread);
                     perror ("[Thread]Eroare la write() catre client.\n");

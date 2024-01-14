@@ -212,13 +212,30 @@ int main (int argc, char *argv[])
             return errno;           
           }
 
-          if (read (sd, buf, sizeof(buf)) < 0)
+          int count;
+          if (read (sd, &count, sizeof(int)) < 0)
           {
               perror ("[client]Eroare la read() de la server.\n");
               return errno;
           }
 
-          printf ("[client]Mesajul primit este: %s\n", buf);
+          printf ("[client]Mesajul primit este: %d\n", count);
+
+          char conversations[256][256];
+
+          if (read (sd, conversations, sizeof(conversations)) < 0)
+          {
+              perror ("[client]Eroare la read() de la server.\n");
+              return errno;
+          }
+
+          printf ("[client]Mesajul primit este: \n");
+
+          int i;
+          for(i=0; i<count ; i++)
+          {
+              printf("%s\n", conversations[i]);
+          }
         }
 
         if(strcmp("trimite_mesaj", buf)==0)

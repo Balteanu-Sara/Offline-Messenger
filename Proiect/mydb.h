@@ -15,3 +15,6 @@ void insert_into_users(sqlite3* db, char username[], char password[]);
 
 //pentru trimite_mesaj 
 void insert_into_messages(sqlite3* db, char username1[], char username2[], char text[]);
+
+//pentru conversatii
+void show_conversations(sqlite3* db, char username[], char conversations[256][256], int *count1);
