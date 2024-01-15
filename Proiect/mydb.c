@@ -21,10 +21,8 @@ sqlite3* open_database(const char* dbname)
     char *zErrMsg = 0;
     int rc;
     char *sql;
-    const char* data = "Callback function called";
 
-    /* Open database */
-    rc = sqlite3_open(dbname, &db);  /*dbname = "test.db"*/
+    rc = sqlite3_open(dbname, &db); 
     
    if( rc ) 
    {
@@ -98,6 +96,7 @@ void  create_tables(sqlite3* db)
     } else {
           fprintf(stdout, "Table CONVERSATIONS has been created.\n");
     }
+
 }
 
 int check_username(sqlite3* db, char username[])
@@ -131,7 +130,6 @@ int check_username(sqlite3* db, char username[])
     int result= sqlite3_column_int(stmt, 0);
 
     sqlite3_finalize(stmt);
-    sqlite3_close(db);
 
     return result;
 }
@@ -172,7 +170,6 @@ int check_account(sqlite3* db, char user[], char pass[])
     int result= sqlite3_column_int(stmt, 0);
 
     sqlite3_finalize(stmt);
-    sqlite3_close(db);
 
     return result;
 }
@@ -312,6 +309,7 @@ void insert_into_messages(sqlite3* db, char sender[], char receiver[], char txt[
     }
 
     rc = sqlite3_step(stmt);
+    //fprintf(stderr, "ERROR NUMBER: %d\n", rc);
     if (rc != SQLITE_DONE) {
         fprintf(stderr, "Error executing queryy: %s\n", sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
@@ -544,8 +542,6 @@ void insert_into_messages(sqlite3* db, char sender[], char receiver[], char txt[
             sqlite3_close(db);
         }
 
-        //sql="UPDATE CONVERSATIONS SET activity_time= ? WHERE user1_id= ? AND user2_id= ?;";
-
         sql="UPDATE CONVERSATIONS SET activity_time = (SELECT sent_time FROM MESSAGES WHERE message_id = ?) WHERE user1_id= ? AND user2_id= ?;";
 
         rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
@@ -731,21 +727,207 @@ void show_conversations(sqlite3* db, char username[], char conversations[256][25
     sqlite3_finalize(stmt);
 }
 
+void show_messages(sqlite3* db, char username1[], char username2[], char messages[256][256], int count)
+{
+    sqlite3_stmt* stmt;
+    int rc;
+    char *sql;
+
+    sql = "SELECT user_id FROM USERS WHERE username = ?;";
+    
+    //luam id-ul userului1
+    rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot prepare statement: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+    } 
+
+    rc = sqlite3_bind_text(stmt, 1, username1, -1, SQLITE_STATIC);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot bind parameter: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+    }
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_ROW) {
+        fprintf(stderr, "Error executing query: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+    }
+    else fprintf(stdout, "Got user1's id.\n");
+
+    int user1id = sqlite3_column_int(stmt, 0);
+    fprintf(stderr, "User1's id: %d\n", user1id);
+
+    rc = sqlite3_reset(stmt);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Error resetting statement: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+    }
+
+    //luam id-ul userului2
+    rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot prepare statement: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+    } 
+
+    rc = sqlite3_bind_text(stmt, 1, username2, -1, SQLITE_STATIC);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot bind parameter: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+    }
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_ROW) {
+        fprintf(stderr, "Error executing query: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+    }
+    else fprintf(stdout, "Got user2's id.\n");
+
+    int user2id = sqlite3_column_int(stmt, 0);
+    fprintf(stderr, "User2's id: %d\n", user2id);
+
+    rc = sqlite3_reset(stmt);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Error resetting statement: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+    }
+
+    sql="SELECT sender_id, message_text FROM MESSAGES WHERE (sender_id= ? AND receiver_id= ?) OR (sender_id= ? AND receiver_id= ?) ORDER BY sent_time DESC LIMIT ?;";
+
+    rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot prepare statement: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+    }
+
+    rc = sqlite3_bind_int(stmt, 1, user1id);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot bind parameter 1: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+    }
+    rc = sqlite3_bind_int(stmt, 2, user2id);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot bind parameter 2: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);   
+    }
+    rc = sqlite3_bind_int(stmt, 3, user2id);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot bind parameter 1: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+    }
+    rc = sqlite3_bind_int(stmt, 4, user1id);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot bind parameter 2: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);   
+    }
+    rc = sqlite3_bind_int(stmt, 5, count);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot bind parameter 2: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);   
+    }
+
+    int index=0;
+
+    sqlite3_stmt* stmt1;
+    int rc1, again=0;
+    char *sql1;
+
+    while((rc = sqlite3_step(stmt)) == SQLITE_ROW)
+    {
+        int senderid = sqlite3_column_int(stmt, 0);
+        const char* message = sqlite3_column_text(stmt,1);
+
+        fprintf(stderr, "From the array, user1's id: %d\n", senderid);
+        fprintf(stderr, "From the array, user2's id: %s\n", message);
+
+        if(again==1)
+        {
+            rc1 = sqlite3_reset(stmt1);
+            if(rc1 != SQLITE_OK) {
+                fprintf(stderr, "Error resetting statement: %s\n", sqlite3_errmsg(db));
+                sqlite3_finalize(stmt1);
+                sqlite3_close(db);
+            }
+        }
+
+        //obtinem usernameul senderului
+        sql1= "SELECT username FROM USERS WHERE user_id = ?;";
+
+        rc1 = sqlite3_prepare_v2(db, sql1, -1, &stmt1, NULL);
+        if (rc1 != SQLITE_OK) {
+            fprintf(stderr, "Cannot prepare statement: %s\n", sqlite3_errmsg(db));
+            sqlite3_close(db);
+        }
+
+        rc1 = sqlite3_bind_int(stmt1, 1, senderid);
+        if (rc1 != SQLITE_OK) {
+            fprintf(stderr, "Cannot bind parameter 1: %s\n", sqlite3_errmsg(db));
+            sqlite3_finalize(stmt1);
+        }
+
+        rc1 = sqlite3_step(stmt1);
+        if (rc1 != SQLITE_ROW) {
+            fprintf(stderr, "Error executing query: %s\n", sqlite3_errmsg(db));
+            sqlite3_finalize(stmt1);
+            sqlite3_close(db);
+        }
+        else fprintf(stdout, "We have sender's username .\n");
+
+        const char* sender_username=sqlite3_column_text(stmt1,0);
+        fprintf(stderr, "Sender's username: %s\n", sender_username);
+
+        snprintf(messages[index], sizeof(messages[index]), "%s : %s", sender_username, message);
+
+        index++;
+
+        again=1;
+    }
+
+    //sqlite3_finalize(stmt1);
+
+    int eror_stmt1;
+
+    eror_stmt1=sqlite3_finalize(stmt1);
+
+    if (eror_stmt1 == SQLITE_OK) {
+        printf("Finalization stmt1 successful.\n");
+    } else {
+        fprintf(stderr, "Error finalizing statement1: %s\n", sqlite3_errmsg(db));
+    }
+
+    //*count=index;
+
+    if (rc != SQLITE_DONE) {
+        fprintf(stderr, "Error executing query: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+        exit(1);
+    }
+
+    //sqlite3_finalize(stmt);
+
+    int eror_stmt;
+
+    eror_stmt=sqlite3_finalize(stmt);
+
+    if (eror_stmt == SQLITE_OK) {
+        printf("Finalization stmt successful.\n");
+    } else {
+        fprintf(stderr, "Error finalizing statement: %s\n", sqlite3_errmsg(db));
+    }
+}
+
 void close_database(sqlite3* db) {
     sqlite3_close(db);
     fprintf(stdout, "The database has been closed.\n");
 }
 
 /*
-
-
-   /* Create SQL statement using create
-   sql = "CREATE TABLE COMPANY("  \
-      "ID INT PRIMARY KEY     NOT NULL," \
-      "NAME           TEXT    NOT NULL," \
-      "AGE            INT     NOT NULL," \
-      "ADDRESS        CHAR(50)," \
-      "SALARY         REAL );"; */
 
     /* Create SQL statement using insert into
     sql = "INSERT INTO COMPANY (ID,NAME,AGE,ADDRESS,SALARY) "  \

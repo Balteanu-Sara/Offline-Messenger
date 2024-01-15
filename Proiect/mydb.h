@@ -18,3 +18,6 @@ void insert_into_messages(sqlite3* db, char username1[], char username2[], char 
 
 //pentru conversatii
 void show_conversations(sqlite3* db, char username[], char conversations[256][256], int *count1);
+
+//pentru istoric_mesaje
+void show_messages(sqlite3* db, char username1[], char username2[], char messages[256][256], int count);

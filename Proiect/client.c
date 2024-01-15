@@ -15,6 +15,24 @@ extern int errno;
 /* portul de conectare la server*/
 int port;
 
+ssize_t read_wrapper(int socketdesc, void *buffer, size_t count) {
+    ssize_t total = 0;
+    ssize_t bytes_read;
+
+    while (total < count) {
+        bytes_read = read(socketdesc, buffer + total, count - total);
+
+        if (bytes_read > 0) {
+            total += bytes_read;
+        } else if (bytes_read == 0) {
+            break;
+        } else {
+            return bytes_read;
+        }
+    }
+    return total;
+}
+
 int main (int argc, char *argv[])
 {
     int sd;			// descriptorul de socket
@@ -222,12 +240,13 @@ int main (int argc, char *argv[])
           printf ("[client]Mesajul primit este: %d\n", count);
 
           char conversations[256][256];
+          ssize_t bytes_read = read_wrapper(sd, conversations, sizeof(conversations));
 
-          if (read (sd, conversations, sizeof(conversations)) < 0)
+          if (bytes_read> 0) 
           {
-              perror ("[client]Eroare la read() de la server.\n");
-              return errno;
+              printf("Read %zd bytes to the socket.\n", bytes_read);
           }
+          else printf("Error at bytes_read.\n");
 
           printf ("[client]Mesajul primit este: \n");
 
@@ -329,14 +348,79 @@ int main (int argc, char *argv[])
               return errno;           
             }
 
-            if (read (sd, buf, sizeof(buf)) < 0)
+            int count;
+            if (read (sd, &count, sizeof(int)) < 0)
             {
                 perror ("[client]Eroare la read() de la server.\n");
                 return errno;
             }
 
-            printf ("[client]Mesajul primit este: %s\n", buf);
+            printf ("[client]Mesajul primit este: %d\n", count);
+
+            char messages[256][256];
+            ssize_t bytes_read = read_wrapper(sd, messages, sizeof(messages));
+
+            if (bytes_read> 0) 
+            {
+                printf("Read %zd bytes to the socket.\n", bytes_read);
+            }
+            else printf("Error at bytes_read.\n");
+
+            printf ("[client]Mesajul primit este: \n");
+
+            int i;
+            for(i=0; i<count ; i++)
+            {
+                printf("%s\n", messages[i]);
+            }
           }
+        }
+
+        if(strcmp("load_more", buf)==0)
+        {
+          if(write (sd, buf, sizeof(buf)) <= 0)
+          { 
+            perror ("[client]Eroare la write() spre server.\n");
+            return errno;           
+          }
+
+          if (read (sd, buf, sizeof(buf)) < 0)
+          {
+              perror ("[client]Eroare la read() de la server.\n");
+              return errno;
+          }
+
+          printf ("[client]Mesajul primit este: %s\n", buf);
+
+          if(strcmp(buf, "clientul nu e logged in!")!=0 && strcmp(buf, "intra intr-o conversatie!")!=0)
+          {
+            int count;
+            if (read (sd, &count, sizeof(int)) < 0)
+            {
+                perror ("[client]Eroare la read() de la server.\n");
+                return errno;
+            }
+
+            printf ("[client]Mesajul primit este: %d\n", count);
+
+            char messages[256][256];
+            ssize_t bytes_read = read_wrapper(sd, messages, sizeof(messages));
+
+            if (bytes_read> 0) 
+            {
+                printf("Read %zd bytes to the socket.\n", bytes_read);
+            }
+            else printf("Error at bytes_read.\n");
+
+            printf ("[client]Mesajul primit este: \n");
+
+            int i;
+            for(i=0; i<count ; i++)
+            {
+                printf("%s\n", messages[i]);
+            }
+          }
+
         }
 
         if(strcmp("reply", buf)==0)

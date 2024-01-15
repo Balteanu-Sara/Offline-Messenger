@@ -30,6 +30,22 @@ typedef struct thData{
 
 static void *treat(void *); /* functia executata de fiecare thread ce realizeaza comunicarea cu clientii */
 void raspunde(void *);
+ssize_t write_wrapper(int socketdesc, const void *buffer, size_t count) {
+    ssize_t total = 0;
+    ssize_t bytes_written;
+
+    while (total < count) {
+        bytes_written = write(socketdesc, buffer + total, count - total);
+
+        if (bytes_written >= 0) {
+            total += bytes_written;
+        } else {
+            return bytes_written;
+        }
+    }
+
+    return total;
+}
 
 int main ()
 {
@@ -43,6 +59,7 @@ int main ()
   
     sqlite3* db = open_database("my_database.db"); //deschide database ul aplicatiei
     create_tables(db); //creeaza tabele
+    close_database(db);
 
   /* crearea unui socket */
     if ((sd = socket (AF_INET, SOCK_STREAM, 0)) == -1)
@@ -110,8 +127,7 @@ int main ()
 
 			
 	}//while  
-
-  close_database(db);  
+ 
 };
 				
 static void *treat(void * arg)
@@ -128,8 +144,9 @@ static void *treat(void * arg)
 
 void raspunde(void *arg)
 {
-    int continua=1, in=0, in_convo=0;
+    int continua=1, in=0, in_convo=0, load=0;
     char current_user[35]="";
+    char a_user[35];
     while(continua)
     {
         int nr;
@@ -175,6 +192,7 @@ void raspunde(void *arg)
               sqlite3* db = open_database("my_database.db");
               int exists;
               exists= check_username(db, msg1);
+              close_database(db);
 
               if(exists!=0)
               {
@@ -202,6 +220,7 @@ void raspunde(void *arg)
 
                       sqlite3* db = open_database("my_database.db");
                       exists = check_username(db, msg1);
+                      close_database(db);
                   }
               }
 
@@ -229,6 +248,7 @@ void raspunde(void *arg)
               open_database("my_database.db");
               //printf("%s, %s\n", msg1, msg2);
               insert_into_users(db, msg1, msg2);
+              close_database(db);
 
               char response2[]="Inregistrat!";
               response2[12]='\0';
@@ -292,6 +312,7 @@ void raspunde(void *arg)
 
               sqlite3* db = open_database("my_database.db");
               int exists = check_account(db, msg1, msg2);
+              close_database(db);
 
               if(exists == 1)
               {
@@ -341,10 +362,14 @@ void raspunde(void *arg)
 
               if(in==1)
               {
+                load=0;
+                memset(a_user, 0, sizeof a_user);
+
                 char conversations[256][256];
                 int count;
                 sqlite3* db = open_database("my_database.db");
                 show_conversations(db, current_user,conversations, &count);
+                close_database(db);
 
                 int i;
                 for(i=0; i<count ; i++)
@@ -364,13 +389,20 @@ void raspunde(void *arg)
                     perror ("[Thread]Eroare la write() catre client.\n");
                 }
 
-                //printf("[Thread %d]Trimitem mesajul inapoi...%s\n",tdL.idThread, conversations);
+                /*printf("[Thread %d]Trimitem mesajul inapoi...%s\n",tdL.idThread, conversations);
 
                 if (write (tdL.cl, conversations, sizeof(conversations)) <= 0)
                 {
                     printf("[Thread %d] ",tdL.idThread);
                     perror ("[Thread]Eroare la write() catre client.\n");
-                }
+                } */
+
+                ssize_t bytes_written = write_wrapper(tdL.cl, conversations, sizeof(conversations));
+
+                if (bytes_written > 0) {
+                    printf("Wrote %zd bytes to the socket.\n", bytes_written);
+                } 
+                else { printf("Error at bytes_written.\n");}
               }
             }
 
@@ -393,6 +425,8 @@ void raspunde(void *arg)
               if(in==1)
               {
                 in_convo=0;
+                load=0;
+                memset(a_user, 0, sizeof a_user);
                 char response[]="trebuie nume";
                 response[12]='\0';
 
@@ -437,6 +471,7 @@ void raspunde(void *arg)
 
                 sqlite3* db = open_database("my_database.db");
                 insert_into_messages(db, current_user, msg1, msg2);
+                close_database(db);
 
                 char response2[]="mesaj trimis!";
                 response2[13]='\0';
@@ -470,6 +505,8 @@ void raspunde(void *arg)
               if(in==1)
               {
                 in_convo=1;
+                load=0;
+                memset(a_user, 0, sizeof a_user);
                 char response[]="trebuie nume";
                 response[12]='\0';
 
@@ -481,17 +518,17 @@ void raspunde(void *arg)
                     perror ("[Thread]Eroare la write() catre client.\n");
                 }
 
-                char msg1[101];
-                if (read (tdL.cl, msg1, sizeof(msg1)) <= 0)
+                char receiver[101];
+                if (read (tdL.cl, receiver, sizeof(receiver)) <= 0)
                 {
                     printf("[Thread %d]\n",tdL.idThread);
                     perror ("Eroare la read() de la client.\n");
                         
                 }
                 
-                printf ("[Thread %d]Mesajul a fost receptionat...%s\n",tdL.idThread, msg1);	
+                printf ("[Thread %d]Mesajul a fost receptionat...%s\n",tdL.idThread, receiver);	
 
-                char response1[]="*afiseaza conversatie*";
+                /*char response1[]="*afiseaza conversatie*";
                 response1[22]='\0';
 
                 printf("[Thread %d]Trimitem mesajul inapoi...%s\n",tdL.idThread, response1);
@@ -500,8 +537,117 @@ void raspunde(void *arg)
                 {
                     printf("[Thread %d] ",tdL.idThread);
                     perror ("[Thread]Eroare la write() catre client.\n");
+                } */
+
+                char messages[256][256];
+                memset(messages, 0, sizeof messages);
+                load=5;
+                strcpy(a_user, receiver);
+                //printf('a_user: %s, receiver: %s', a_user, receiver ); ?????
+                sqlite3* db1 = open_database("my_database.db");
+                show_messages(db1, current_user, receiver, messages, load);
+                close_database(db1);
+
+                int i;
+                for(i=0; i<load ; i++)
+                {
+                  printf("%s\n", messages[i]);
+                }
+
+                printf("[Thread %d]Trimitem mesajul inapoi...%d\n",tdL.idThread, load);
+
+                if (write (tdL.cl, &load, sizeof(int)) <= 0)
+                {
+                    printf("[Thread %d] ",tdL.idThread);
+                    perror ("[Thread]Eroare la write() catre client.\n");
+                }
+
+                ssize_t bytes_written = write_wrapper(tdL.cl, messages, sizeof(messages));
+
+                if (bytes_written > 0) {
+                    printf("Wrote %zd bytes to the socket.\n", bytes_written);
+                } 
+                else { printf("Error at bytes_written.\n");}
+
+              }
+            }
+
+            if(strcmp("load_more", msg)==0)
+            {
+              if(in==0)
+              {
+                char response[]="clientul nu e logged in!";
+                response[24]='\0';
+
+                printf("[Thread %d]Trimitem mesajul inapoi...%s\n",tdL.idThread, response);
+
+                if (write (tdL.cl, response, sizeof(response)) <= 0)
+                {
+                    printf("[Thread %d] ",tdL.idThread);
+                    perror ("[Thread]Eroare la write() catre client.\n");
                 }
               }
+
+              if(in==1)
+              {
+                if(in_convo==0)
+                {
+                  char response[]="intra intr-o conversatie!";
+                  response[25]='\0';
+
+                  printf("[Thread %d]Trimitem mesajul inapoi...%s\n",tdL.idThread, response);
+
+                  if (write (tdL.cl, response, sizeof(response)) <= 0)
+                  {
+                      printf("[Thread %d] ",tdL.idThread);
+                      perror ("[Thread]Eroare la write() catre client.\n");
+                  }
+                }
+
+                if(in_convo==1)
+                {
+                    char response[]="tot ok!";
+                    response[7]='\0';
+
+                    printf("[Thread %d]Trimitem mesajul inapoi...%s\n",tdL.idThread, response);
+
+                    if (write (tdL.cl, response, sizeof(response)) <= 0)
+                    {
+                        printf("[Thread %d] ",tdL.idThread);
+                        perror ("[Thread]Eroare la write() catre client.\n");
+                    }
+
+                    load=load+5;
+
+                    char messages[256][256];
+                    memset(messages, 0, sizeof messages);
+                    sqlite3* db = open_database("my_database.db");
+                    show_messages(db, current_user, a_user, messages, load);
+                    close_database(db);
+
+                    int i;
+                    for(i=0; i<load ; i++)
+                    {
+                      printf("%s\n", messages[i]);
+                    }
+
+                    printf("[Thread %d]Trimitem mesajul inapoi...%d\n",tdL.idThread, load);
+
+                    if (write (tdL.cl, &load, sizeof(int)) <= 0)
+                    {
+                        printf("[Thread %d] ",tdL.idThread);
+                        perror ("[Thread]Eroare la write() catre client.\n");
+                    }
+           
+                    ssize_t bytes_written = write_wrapper(tdL.cl, messages, sizeof(messages));
+
+                    if (bytes_written > 0) {
+                        printf("Wrote %zd bytes to the socket.\n", bytes_written);
+                    } 
+                    else { printf("Error at bytes_written.\n");}
+                    }                
+              }
+
             }
 
             if(strcmp("reply", msg)==0)
@@ -597,6 +743,8 @@ void raspunde(void *arg)
             if(strcmp("logout", msg)==0 && in==1)
             {
               in=0;
+              load=0;
+              memset(a_user, 0, sizeof a_user);
 
               char response[]="client logged out!";
               response[18]='\0';
