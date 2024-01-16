@@ -378,8 +378,6 @@ void raspunde(void *arg)
                 }
 
                 in_convo=0;
-                //char response[]="*afiseaza lista conversatii*";
-                //response[28]='\0';
 
                 printf("[Thread %d]Trimitem mesajul inapoi...%d\n",tdL.idThread, count);
 
@@ -388,14 +386,6 @@ void raspunde(void *arg)
                     printf("[Thread %d] ",tdL.idThread);
                     perror ("[Thread]Eroare la write() catre client.\n");
                 }
-
-                /*printf("[Thread %d]Trimitem mesajul inapoi...%s\n",tdL.idThread, conversations);
-
-                if (write (tdL.cl, conversations, sizeof(conversations)) <= 0)
-                {
-                    printf("[Thread %d] ",tdL.idThread);
-                    perror ("[Thread]Eroare la write() catre client.\n");
-                } */
 
                 ssize_t bytes_written = write_wrapper(tdL.cl, conversations, sizeof(conversations));
 
@@ -527,17 +517,6 @@ void raspunde(void *arg)
                 }
                 
                 printf ("[Thread %d]Mesajul a fost receptionat...%s\n",tdL.idThread, receiver);	
-
-                /*char response1[]="*afiseaza conversatie*";
-                response1[22]='\0';
-
-                printf("[Thread %d]Trimitem mesajul inapoi...%s\n",tdL.idThread, response1);
-
-                if (write (tdL.cl, response1, sizeof(response1)) <= 0)
-                {
-                    printf("[Thread %d] ",tdL.idThread);
-                    perror ("[Thread]Eroare la write() catre client.\n");
-                } */
 
                 char messages[256][256];
                 memset(messages, 0, sizeof messages);
@@ -695,15 +674,15 @@ void raspunde(void *arg)
                       perror ("[Thread]Eroare la write() catre client.\n");
                   }
 
-                  char msg1[101];
-                  if (read (tdL.cl, msg1, sizeof(msg1)) <= 0)
+                  int id;
+                  if (read (tdL.cl, &id, sizeof(int)) <= 0)
                   {
                       printf("[Thread %d]\n",tdL.idThread);
                       perror ("Eroare la read() de la client.\n");
                           
                   }
                   
-                  printf ("[Thread %d]Mesajul a fost receptionat...%s\n",tdL.idThread, msg1);	
+                  printf ("[Thread %d]Mesajul a fost receptionat...%d\n",tdL.idThread, id);	
 
                   char response1[]="reply cu";
                   response1[8]='\0';
@@ -725,6 +704,10 @@ void raspunde(void *arg)
                   }
                   
                   printf ("[Thread %d]Mesajul a fost receptionat...%s\n",tdL.idThread, msg2);	
+
+                  sqlite3* db=open_database("my_database.db");
+                  insert_reply_messages(db, current_user, a_user, msg2, id);
+                  close_database(db);
 
                   char response2[]="reply cu succes!";
                   response2[16]='\0';
@@ -758,19 +741,6 @@ void raspunde(void *arg)
               }
             }
 
-            /*if(strcmp("register", msg)!=0 && strcmp("login", msg)!=0 && strcmp("conversatii", msg)!=0 && strcmp("trimite_mesaj", msg)!=0 && strcmp("istoric_mesaje", msg)!=0 && strcmp("reply", msg)!=0 && strcmp("logout", msg)!=0 && strcmp("quit", msg)!=0)
-            {
-                char response[]="comanda nu exista!";
-                response[18]='\0';
-
-                printf("[Thread %d]Trimitem mesajul inapoi...%s\n",tdL.idThread, response);
-
-                if (write (tdL.cl, response, sizeof(response)) <= 0)
-                {
-                    printf("[Thread %d] ",tdL.idThread);
-                    perror ("[Thread]Eroare la write() catre client.\n");
-                }
-            } */
         }
         else
         {

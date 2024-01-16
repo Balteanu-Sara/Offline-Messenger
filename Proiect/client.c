@@ -443,11 +443,10 @@ int main (int argc, char *argv[])
           {
             printf ("[client]Mesajul: ");
             fflush (stdout);
-            //read (0, buf, sizeof(buf));
-            bzero(buf, sizeof(buf));
-            scanf("%s", buf);
+            int id;
+            scanf("%d", &id);
 
-            if(write (sd, buf, sizeof(buf)) <= 0)
+            if(write (sd, &id, sizeof(int)) <= 0)
             { 
               perror ("[client]Eroare la write() spre server.\n");
               return errno;           
@@ -500,23 +499,6 @@ int main (int argc, char *argv[])
 
           printf ("[client]Mesajul primit este: %s\n", buf);
         }
-
-        /*if(strcmp("register", buf)!=0 && strcmp("login", buf)!=0 && strcmp("conversatii", buf)!=0 && strcmp("trimite_mesaj", buf)!=0 && strcmp("istoric_mesaje", buf)!=0 && strcmp("reply", buf)!=0 && strcmp("logout", buf)!=0 && strcmp("quit", buf)!=0)
-        {
-          if(write (sd, buf, sizeof(buf)) <= 0)
-          { 
-            perror ("[client]Eroare la write() spre server.\n");
-            return errno;           
-          }
-
-          if (read (sd, buf, sizeof(buf)) < 0)
-          {
-              perror ("[client]Eroare la read() de la server.\n");
-              return errno;
-          }
-
-          printf ("[client]Mesajul primit este: %s\n", buf);
-        } */
 
         /* citirea mesajului */
         printf ("[client]Introduceti comanda: ");
