@@ -21,3 +21,5 @@ void show_conversations(sqlite3* db, char username[], char conversations[256][25
 
 //pentru istoric_mesaje
 void show_messages(sqlite3* db, char username1[], char username2[], char messages[256][256], int count);
+
+
