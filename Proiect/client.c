@@ -239,22 +239,26 @@ int main (int argc, char *argv[])
 
           printf ("[client]Mesajul primit este: %d\n", count);
 
-          char conversations[256][256];
-          ssize_t bytes_read = read_wrapper(sd, conversations, sizeof(conversations));
-
-          if (bytes_read> 0) 
+          if(count!=-1)
           {
-              printf("Read %zd bytes to the socket.\n", bytes_read);
-          }
-          else printf("Error at bytes_read.\n");
+            char conversations[256][256];
+            ssize_t bytes_read = read_wrapper(sd, conversations, sizeof(conversations));
 
-          printf ("[client]Mesajul primit este: \n");
+            if (bytes_read> 0) 
+            {
+                printf("Read %zd bytes to the socket.\n", bytes_read);
+            }
+            else printf("Error at bytes_read.\n");
 
-          int i;
-          for(i=0; i<count ; i++)
-          {
-              printf("%s\n", conversations[i]);
+            printf ("[client]Mesajul primit este: \n");
+
+            int i;
+            for(i=0; i<count ; i++)
+            {
+                printf("%s\n", conversations[i]);
+            }
           }
+          else printf("Clientul nu este logged in!\n");
         }
 
         if(strcmp("trimite_mesaj", buf)==0)

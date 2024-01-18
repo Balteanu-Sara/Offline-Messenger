@@ -246,7 +246,6 @@ void raspunde(void *arg)
               printf ("[Thread %d]Mesajul a fost receptionat...%s\n",tdL.idThread, msg2);	
 
               open_database("my_database.db");
-              //printf("%s, %s\n", msg1, msg2);
               insert_into_users(db, msg1, msg2);
               close_database(db);
 
@@ -348,12 +347,10 @@ void raspunde(void *arg)
             {
               if(in==0)
               {
-                char response[]="clientul nu e logged in!";
-                response[24]='\0';
+                int nr=-1;
+                printf("[Thread %d]Trimitem mesajul inapoi...%d\n",tdL.idThread, nr);
 
-                printf("[Thread %d]Trimitem mesajul inapoi...%s\n",tdL.idThread, response);
-
-                if (write (tdL.cl, response, sizeof(response)) <= 0)
+                if (write (tdL.cl, &nr, sizeof(int)) <= 0)
                 {
                     printf("[Thread %d] ",tdL.idThread);
                     perror ("[Thread]Eroare la write() catre client.\n");
